@@ -1,0 +1,92 @@
+version: '3'
+networks:
+  app-tier:
+    driver: bridge
+
+services:
+    db:
+     image: 'bitnami/postgresql:latest'
+     #network_mode: bridge
+     container_name: db
+     networks:
+      - app-tier
+    #  - postgres-data:/var/lib/postgresql/data
+    #  expose:
+    #  - 5432
+     ports:
+      - 5432:5432
+     environment:
+         - POSTGRES_PASSWORD=123456
+         - POSTGRES_USER=postgres
+         - POSTGRES_DB=salesDB
+     restart: always
+    # APP*****************************************
+   
+        
+    springboot-docker-compose-app-container-user:
+     image: springboot-docker-compose-app-user:2
+     build:
+       context: ./
+       dockerfile: user-docker-mvn
+     volumes:
+        - /data/springboot-docker-compose-app-user
+     ports:
+        - 8000:8000
+     networks:
+      - app-tier
+     depends_on:
+      - db
+
+     
+     environment: # Pass environment variables to the service
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/salesDB
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: 123456   
+
+     
+    springboot-docker-compose-app-container-product:
+     image: springboot-docker-compose-app-product:3
+     build:
+       context: ./
+       dockerfile: product-docker-mvn
+     volumes:
+        - /data/springboot-docker-compose-app-product
+     ports:
+        - 8001:8001
+     networks:
+      - app-tier
+     depends_on:
+       - db
+
+     environment: # Pass environment variables to the service
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/salesDB
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: 123456   
+
+    springboot-docker-compose-app-container-sales:
+     image: springboot-docker-compose-app-sales:4
+     build:
+       context: ./
+       dockerfile: sales-docker-mvn
+     volumes:
+        - /data/springboot-docker-compose-app-sales
+     ports:
+        - 8002:8002
+     networks:
+      - app-tier
+     depends_on:
+       - db 
+
+   
+     environment: # Pass environment variables to the service
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/salesDB
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: 123456 
+
+      
+   
+
+      
+     
+     
+   
